@@ -1,0 +1,13 @@
+{
+  "name": "wp-content-sync",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "pull": "node scripts/pull.js",
+    "push": "node scripts/push.js"
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.3"
+  }
+}
