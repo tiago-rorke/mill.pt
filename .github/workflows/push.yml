@@ -29,7 +29,7 @@ jobs:
           WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
           BEFORE_SHA: ${{ github.event.before }}
           AFTER_SHA: ${{ github.sha }}
-          # ALLOW_TRASH: 'true'   # uncomment to let deleted files trash the post
+          ALLOW_TRASH: 'true'   # uncomment to let deleted files trash the post
       - name: Commit write-back (ids, slugs, timestamps)
         if: always()
         run: |
