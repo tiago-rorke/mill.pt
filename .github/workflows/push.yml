@@ -1,9 +1,11 @@
 name: Push to WordPress
 
 on:
-  push:
-    branches: [main]
-    paths: ['content/**']
+  workflow_dispatch:
+    inputs:
+      since:
+        description: 'Push files changed since this commit (blank = since the last-wp-push tag)'
+        required: false
 
 permissions:
   contents: write
@@ -22,14 +24,19 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - name: Find base commit
+        id: base
+        run: |
+          BASE="${{ inputs.since }}"
+          if [ -z "$BASE" ]; then BASE=$(git rev-parse -q --verify refs/tags/last-wp-push || true); fi
+          echo "sha=$BASE" >> "$GITHUB_OUTPUT"
       - run: node scripts/push.js
         env:
           WP_URL: ${{ secrets.WP_URL }}
           WP_USER: ${{ secrets.WP_USER }}
           WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
-          BEFORE_SHA: ${{ github.event.before }}
+          BEFORE_SHA: ${{ steps.base.outputs.sha }}
           AFTER_SHA: ${{ github.sha }}
-          ALLOW_TRASH: 'true'   # uncomment to let deleted files trash the post
       - name: Commit write-back (ids, slugs, timestamps)
         if: always()
         run: |
@@ -37,3 +44,8 @@ jobs:
           git config user.email "wp-sync@users.noreply.github.com"
           git add -A content
           git diff --cached --quiet || (git commit -m "Record WordPress ids and timestamps [skip ci]" && git pull --rebase && git push)
+      - name: Move last-push tag
+        if: success()
+        run: |
+          git tag -f last-wp-push HEAD
+          git push -f origin last-wp-push
